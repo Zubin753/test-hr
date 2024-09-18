@@ -23,8 +23,8 @@ import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/
 import {useRouter} from "next/router";
 import NavbarTop from "@/components/uiSelf/navbarTop";
 import InputSearch from "@/components/uiSelf/inputSearch";
-import {useLazyQuery, useMutation} from "@apollo/client";
-import {AUTH_TOKEN, REFRESH_TOKEN} from "@/apollo-client";
+import {useLazyQuery} from "@apollo/client";
+import {AUTH_TOKEN} from "@/apollo-client";
 
 export default function Home() {
   const {user, setUser, isAuth, logout} = useUserStore();
