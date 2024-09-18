@@ -8,83 +8,52 @@ import {MdLogout} from "react-icons/md";
 import {Separator} from "@/components/ui/separator"
 import {IoMenu} from "react-icons/io5";
 import {SlOptionsVertical} from "react-icons/sl";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command"
+import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs"
 import {cn} from "@/lib/utils"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover"
 import {Avatar, AvatarImage, AvatarFallback} from "@/components/ui/avatar";
-import {
-  Bell,
-  CircleHelp,
-  Facebook,
-  Mail,
-  Phone,
-  Settings,
-  Twitter,
-  Linkedin,
-  Hash,
-  Clock,
-  Users,
-  Globe,
-  MapPin,
-  CircleUserRound,
-  Clipboard,
-  Mountain,
-  History
-} from "lucide-react";
+import {Bell, CircleHelp, Facebook, Mail, Phone, Settings, Twitter, Linkedin, Hash, Clock, Users, Globe, MapPin, CircleUserRound, Clipboard, Mountain, History} from "lucide-react";
 import {IoIosArrowDown} from "react-icons/io";
-
 import {CaretSortIcon, CheckIcon} from "@radix-ui/react-icons"
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuLink,
-  NavigationMenuContent,
-  NavigationMenuItem
-} from "@/components/ui/navigation-menu";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card"
+import {NavigationMenu, NavigationMenuList, NavigationMenuTrigger, NavigationMenuLink, NavigationMenuContent, NavigationMenuItem} from "@/components/ui/navigation-menu";
+import {Card, CardContent,} from "@/components/ui/card"
 import {Button} from "@/components/ui/button";
-
-import {
-  Table,
-  TableBody,
-
-  TableCell,
-
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
 import {useRouter} from "next/router";
 import NavbarTop from "@/components/uiSelf/navbarTop";
 import InputSearch from "@/components/uiSelf/inputSearch";
+import {useLazyQuery, useMutation} from "@apollo/client";
+import {AUTH_TOKEN, REFRESH_TOKEN} from "@/apollo-client";
 
 export default function Home() {
-  const {user, logout} = useUserStore();
+  const {user, setUser, isAuth, logout} = useUserStore();
+  const handleFetchUserProfile = (accessToken: string) => {
+    fetchUserProfile({
+      context: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    });
+  }
+
+  const [fetchUserProfile, { loading: profileLoading }] = useLazyQuery(AUTH_TOKEN, {
+      onCompleted: (data) => {
+        setUser(data.myProfile.name, data.myProfile.avatar, data.myProfile.id); // Сохраняем данные пользователя в состоянии// Перенаправляем на страницу информации
+      },
+    onError: (error) => {
+      console.error("Fetch profile error:", error);
+      router.push('/')
+    },
+  });
 
   useEffect(() => {
-    if (user.name) {
-      console.log("User data is available:", user);
-    } else {
-      console.log("User data is not available yet.");
-    }
-  }, [user]);
-
+    logout()
+    const at = localStorage.getItem('access_token');
+    if (at) handleFetchUserProfile(at)
+    else router.push('/')
+  }, [])
 
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState("")
@@ -93,9 +62,7 @@ export default function Home() {
   const [open3, setOpen3] = React.useState(false)
   const [value3, setValue3] = React.useState("")
 
-
   const router = useRouter();
-
 
   const data = [
     {
@@ -120,8 +87,7 @@ export default function Home() {
     },
   ]
 
-
-  const invoices = [
+  const tableData = [
     {
       date: "23/05/2024",
       description: "Accrual for 23/05/2024 to 20/11/2024",
@@ -170,17 +136,16 @@ export default function Home() {
   const exit = () => {
     logout();
     localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
     router.push('/')
   }
 
   return (
-    <div className={"flex flex-col justify-center items-center min-w-screen  bg-gray-300 min-w-[360px]"}>
-
-      <div className={"flex flex-col justify-center items-center w-full max-w-[1440px] "}>
+    <div className={"flex flex-col justify-center items-center min-w-screen bg-gray-300 min-w-[360px]"}>
+      {profileLoading || !isAuth ? <div>Загрузка</div> : <div className={"flex flex-col justify-center items-center w-full max-w-[1440px] "}>
 
         {/*Вверхняя панель*/}
         <div className="mx-auto px-6 flex justify-between w-full items-center h-[86px] bg-white">
-
           <div className={"font-bold text-[100%]  min-w-[116px] mr-1"}>
             HarmonyHR
           </div>
@@ -195,8 +160,8 @@ export default function Home() {
               <InputSearch/>
             </div>
 
-            <div className={"flex flex-row items-center md:gap-[24px] justify-center"}>
-              <div className={"hidden md:flex  items-center  lg:gap-[24px] md:gap-[6px] justify-between "}>
+            <div className={"flex items-center md:gap-[24px] justify-center"}>
+              <div className={"hidden md:flex items-center lg:gap-[24px] md:gap-[6px] justify-between "}>
                 <Settings size={24}/>
                 <CircleHelp size={24}/>
                 <Bell size={24}/>
@@ -209,7 +174,7 @@ export default function Home() {
               </div>
               <div className={"mr-1 w-[38px] h-[38px]"}>
                 <Avatar>
-                  <AvatarImage src={user.avatar}/>
+                  <AvatarImage src={user.avatar ? user.avatar : undefined}/>
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
               </div>
@@ -220,38 +185,41 @@ export default function Home() {
 
         {/*Средняя панель*/}
         <div className={"flex flex-row bg-bbb items-center justify-center w-full "}>
-
           <div className={"w-full h-[200px] flex px-20 pt-5 gap-10  max-[1191px]:px-1"}>
-
             <div className={"max-[1191px]:hidden"}>
               <aside className={"flex justify-center min-w-[225px] h-[150px] mt-7"}>
                 <Avatar className={" md:w-[150px] md:h-[150px] z-10 "}>
-                  <AvatarImage src={user.avatar}/>
+                  <AvatarImage src={user.avatar ? user.avatar : undefined}/>
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
               </aside>
             </div>
 
 
-
-            <div className={"flex justify-between flex-col h-full w-[1047px] w-full"}>
-              <aside className={"max-[1191px]:flex hidden flex-row items-center justify-between px-12 w-full"}>
+            <div className={"flex justify-between flex-col h-full w-full"}>
+              <aside
+                className={"max-[1191px]:flex hidden flex-row items-center justify-between px-12 max-[540px]:px-0 w-full"}>
+                <div className={'flex justify-start items-center w-10/12'}>
                   <Avatar className={"w-[100px] h-[100px] z-10  m-5"}>
-                    <AvatarImage src={user.avatar}/>
+                    <AvatarImage src={user.avatar ? user.avatar : undefined}/>
                     <AvatarFallback>CN</AvatarFallback>
                   </Avatar>
+
                   <div className={"font-semibold text-[28px]"}>
                     {user.name}
                   </div>
-                  <div>
-                    <SlOptionsVertical size={16}/>
-                  </div>
+                </div>
+
+                <div className={"max-[540px]:relative bottom-10 right-2 z-30"}>
+                  <SlOptionsVertical size={16}/>
+                </div>
               </aside>
 
               <div className={"flex max-[1191px]:hidden  justify-between w-[100%] h-full pt-10 items-center "}>
                 <div className={"flex font-semibold text-[28px]"}>
                   {user.name}
                 </div>
+
                 <div className={"flex max-[1191px]:hidden"}>
                   <NavigationMenu>
                     <NavigationMenuList>
@@ -301,9 +269,7 @@ export default function Home() {
                     </NavigationMenuList>
                   </NavigationMenu>
                 </div>
-
               </div>
-
 
               <div className="w-full max-[1191px]:overflow-x-scroll max-[1191px]:overflow-y-hidden  ">
                 <Tabs defaultValue="time" className="w-full h-full ">
@@ -334,11 +300,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-
         </div>
 
         {/*Основная панель */}
-
         <div className={"flex flex-row bg-bbb items-center justify-center w-full "}>
           <div className={"flex flex-row w-full px-20 gap-10  box-border bg-gphone max-[1191px]:px-1"}>
             <div className={"flex-col flex  min-w-[225px] w-[225px] gap-6 -mt-4 max-[1191px]:hidden"}>
@@ -376,6 +340,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+
             <div className={"flex flex-col justify-between items-center max-w-[1047px] w-full  px-3 bg-white z-30"}>
               <div className={"py-12 box-border w-full"}>
                 <div className={"flex flex-row w-full justify-between items-center p-2"}>
@@ -384,7 +349,8 @@ export default function Home() {
                     Time Off
                   </div>
 
-                  <div className={"flex flex-row gap-8 items-center bg-red-600 max-[540px]:flex-col max-[540px]:justify-center max-[540px]:gap-2 max-[540px]:whitespace-nowrap"}>
+                  <div
+                    className={"flex flex-row gap-8 items-center  max-[540px]:flex-col max-[540px]:justify-center max-[540px]:gap-2 max-[540px]:whitespace-nowrap"}>
                     <div className={"font-medium text-[14px]"}>
                       Accrual Level Start Date <span className={"text-accentText"}>03/09-2020</span>
                     </div>
@@ -394,48 +360,52 @@ export default function Home() {
                   </div>
                 </div>
                 <Separator/>
-                <div className={"flex flex-row justify-center gap-10 w-full max-[1191px]:overflow-x-scroll max-[1191px]:ml-4 max-[1191px]:w-[96%]"}>
+                <div
+                  className={"flex flex-row justify-center gap-10 w-full max-[1191px]:overflow-x-scroll max-[1191px]:ml-4 max-[1191px]:w-[96%]"}>
                   <div className={"flex whitespace-nowrap gap-10 flex-nowrap w-full justify-between max-[1191px]:pr-8"}>
-                  <div className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px] "}>
                     <div
-                      className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8"}>
-                      <div className={"font-semibold text-[20px] text-icon"}>Sick</div>
-                      <div className={"flex flex-row"}>
-                        <div className={"flex items-center text-[30px] font-semibold gap-2 text-icon"}><LuCross
-                          size={50}/>3
+                      className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px] "}>
+                      <div
+                        className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8"}>
+                        <div className={"font-semibold text-[20px] text-icon"}>Sick</div>
+                        <div className={"flex flex-row"}>
+                          <div className={"flex items-center text-[30px] font-semibold gap-2 text-icon"}><LuCross
+                            size={50}/>3
+                          </div>
                         </div>
+                        <div>Days Available</div>
+                        <div className={"text-gset font-semibold"}>1 dey scheduled</div>
                       </div>
-                      <div>Days Available</div>
-                      <div className={"text-gset font-semibold"}>1 dey scheduled</div>
+                      <div className={"text-gset font-medium"}>Sick Full-Time</div>
                     </div>
-                    <div className={"text-gset font-medium"}>Sick Full-Time</div>
-                  </div>
-                  <div className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px] "}>
                     <div
-                      className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8 text-[20px] text-icon font-semibold"}>
-                      <div>Annual Leave</div>
-                      <div className={"flex flex-row"}>
-                        <div className={"flex items-center text-[30px] font-semibold gap-2"}>
-                          <Mountain size={50}/>10.3
+                      className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px] "}>
+                      <div
+                        className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8 text-[20px] text-icon font-semibold"}>
+                        <div>Annual Leave</div>
+                        <div className={"flex flex-row"}>
+                          <div className={"flex items-center text-[30px] font-semibold gap-2"}>
+                            <Mountain size={50}/>10.3
+                          </div>
                         </div>
+                        <div className={"text-[14px]"}>Days Available</div>
                       </div>
-                      <div className={"text-[14px]"}>Days Available</div>
+                      <div className={"text-gset font-medium"}>Holiday Full-Time</div>
                     </div>
-                    <div className={"text-gset font-medium"}>Holiday Full-Time</div>
-                  </div>
-                  <div className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px]  whitespace-nowrap"}>
                     <div
-                      className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8 text-[20px] text-icon font-semibold"}>
-                      <div>Comp/in Lieu Time</div>
-                      <div className={"flex flex-row"}>
-                        <div className={"flex items-center text-[30px] font-semibold gap-2"}><Clipboard size={50}/> 0
+                      className={"flex flex-col justify-center items-center min-w-[210px] max-w-[264px] max-[1440px]:w-[25%] w-[264px]  whitespace-nowrap"}>
+                      <div
+                        className={"bg-gphone max-w-[264px] w-full h-[138px] flex flex-col justify-center items-center rounded-lg mt-8 mx-8 text-[20px] text-icon font-semibold"}>
+                        <div>Comp/in Lieu Time</div>
+                        <div className={"flex flex-row"}>
+                          <div className={"flex items-center text-[30px] font-semibold gap-2"}><Clipboard size={50}/> 0
+                          </div>
                         </div>
+                        <div className={"text-[14px]"}>Human Used(YTD)</div>
                       </div>
-                      <div className={"text-[14px]"}>Human Used(YTD)</div>
+                      <div className={"text-gset font-medium"}>Comp/in Lieu Time Flexible Policy</div>
                     </div>
-                    <div className={"text-gset font-medium"}>Comp/in Lieu Time Flexible Policy</div>
                   </div>
-                </div>
                 </div>
                 <div className={"flex flex-row p-2 mt-3 font-medium text-grayText text-[14px] items-center gap-2"}>
                   <Clock/> Upcoming Time Off
@@ -459,12 +429,13 @@ export default function Home() {
                 </div>
                 <Separator/>
                 <div className={"p-2 flex flex-col w-full"}>
-                  <div className={"flex  w-full flex-row font-medium text-grayText text-[14px] items-center gap-2"}><History/>History
+                  <div className={"flex  w-full flex-row font-medium text-grayText text-[14px] items-center gap-2"}>
+                    <History/>History
                   </div>
-                  <div className={"py-4 w-full gap-4 flex flex-row justify-start"}>
-                    <div className={"flex w-4/12"}>
+                  <div className={"py-4 w-full gap-4 flex flex-row justify-start max-[540px]:flex-col "}>
+                    <div className={"flex w-4/12 max-[540px]:w-full"}>
                       <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger className={"w-full"} asChild >
+                        <PopoverTrigger className={"w-full"} asChild>
                           <Button
                             variant="outline"
                             aria-expanded={open}
@@ -505,7 +476,7 @@ export default function Home() {
                         </PopoverContent>
                       </Popover>
                     </div>
-                    <div className={"flex w-8/12 justify-between"}>
+                    <div className={"flex w-8/12 justify-between max-[540px]:w-full "}>
 
 
                       <Popover open={open2} onOpenChange={setOpen2}>
@@ -550,8 +521,6 @@ export default function Home() {
                           </Command>
                         </PopoverContent>
                       </Popover>
-
-
 
                       <Popover open={open3} onOpenChange={setOpen3}>
                         <PopoverTrigger asChild>
@@ -613,13 +582,13 @@ export default function Home() {
                       </TableRow>
                     </TableHeader>
                     <TableBody className={"font-medium text-sm"}>
-                      {invoices.map((invoice, index) => (
+                      {tableData.map((d, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">{invoice.date}</TableCell>
-                          <TableCell>{invoice.description}</TableCell>
-                          <TableCell>{invoice.usedDays}</TableCell>
-                          <TableCell>{invoice.earnedDays}</TableCell>
-                          <TableCell className="text-right">{invoice.balance}</TableCell>
+                          <TableCell className="font-medium">{d.date}</TableCell>
+                          <TableCell>{d.description}</TableCell>
+                          <TableCell>{d.usedDays}</TableCell>
+                          <TableCell>{d.earnedDays}</TableCell>
+                          <TableCell className="text-right">{d.balance}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -631,8 +600,10 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>}
+
       </div>
-    </div>
+
   );
 }
 

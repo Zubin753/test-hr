@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/card"
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
-
 import React, {useEffect, useState} from "react";
-import {useLazyQuery, useMutation, useQuery} from "@apollo/client";
-import {AUTH_TOKEN, LOGIN_MUTATION} from "@/apollo-client";
+import {useLazyQuery, useMutation} from "@apollo/client";
+import {AUTH_TOKEN, LOGIN_MUTATION, REFRESH_TOKEN} from "@/apollo-client";
 import {useRouter} from 'next/router';
 import useUserStore from "@/store/store";
+import {ILoginData, ILoginVars, IRefreshData, IRefreshVars, IUserAuthData} from "@/types/authTypes";
 
 export const description =
   "A simple login form with email and password. The submit button says 'Sign in'."
@@ -22,20 +22,31 @@ export const description =
 export const LoginForm: React.FC = () => {
 
   const router = useRouter();
-
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [accessToken, setAccessToken] = useState("")
-  const {user, setUser} = useUserStore();
+  const [success, setSuccess] = useState(false)
+  const {setUser} = useUserStore();
 
-  const [fetchUserProfile, { loading: profileLoading, data: profileData, error: profileError }] = useLazyQuery(AUTH_TOKEN, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+  const handleFetchUserProfile = (accessToken: string) => {
+    fetchUserProfile({
+      context: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    },
+    });
+  }
+
+  useEffect(() => {
+    const at = localStorage.getItem('access_token');
+    if (at) handleFetchUserProfile(at)
+    
+    const rt = localStorage.getItem('refresh_token')
+    if (rt) sendRefreshToken({variables: {rToken: rt}});
+  }, [])
+
+  const [fetchUserProfile, { loading: profileLoading }] = useLazyQuery<{myProfile: IUserAuthData}>(AUTH_TOKEN, {
     onCompleted: (data) => {
-      console.log("Авторизация")
       setUser(data.myProfile.name, data.myProfile.avatar, data.myProfile.id); // Сохраняем данные пользователя в состоянии
       router.push('/info'); // Перенаправляем на страницу информации
     },
@@ -44,17 +55,23 @@ export const LoginForm: React.FC = () => {
     },
   });
 
-  const [login, {loading, error}] = useMutation(LOGIN_MUTATION, {
+  const [sendRefreshToken] = useMutation<{refreshToken: IRefreshData}, IRefreshVars>(REFRESH_TOKEN, {
     onCompleted: (data) => {
-      console.log("Login successful:", data);
-      console.log(data.login)
+      localStorage.setItem("access_token", data.refreshToken.access_token)
+      localStorage.setItem("refresh_token", data.refreshToken.refresh_token)
+      handleFetchUserProfile(data.refreshToken.access_token)
+    },
+    onError: (error) => {
+      console.error("Refresh token error:", error);
+    },
+  });
+
+  const [login, {loading, error}] = useMutation<{login: ILoginData}, ILoginVars>(LOGIN_MUTATION, {
+    onCompleted: (data) => {
+      setSuccess(true)
       localStorage.setItem("access_token", data.login.access_token)
-      setAccessToken(data.login.access_token)
       localStorage.setItem("refresh_token", data.login.refresh_token)
-
-      fetchUserProfile();
-
-      // Здесь вы можете сохранить токены или выполнить другие действия
+      handleFetchUserProfile(data.login.access_token)
     },
     onError: (error) => {
       console.error("Login error:", error);
@@ -67,8 +84,9 @@ export const LoginForm: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center flex-col min-h-screen">
+      {profileLoading && <p>Загрузка...</p>}
       {error && <div>{error.message}</div>}
-      <Card className="w-full max-w-sm">
+      {!success ? <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
@@ -88,9 +106,23 @@ export const LoginForm: React.FC = () => {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full " onClick={() => submit(email, password)}>{loading ? 'Loading...' : 'Sign in'}</Button>
+          <Button className="w-full "  onClick={() => submit(email, password)}>{loading ? 'Loading...' : 'Sign in'}</Button>
         </CardFooter>
       </Card>
+
+        :
+
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-4xl align-middle mx-auto">Success</CardTitle>
+            <CardDescription className="text-2xl align-middle mx-auto">
+                You have successfully logged in
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+      }
+
     </div>
 
   )

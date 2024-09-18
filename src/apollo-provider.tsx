@@ -1,9 +1,14 @@
-import { ApolloProvider } from '@apollo/client';
+import {ApolloClient, ApolloProvider, NormalizedCacheObject} from '@apollo/client';
 import createApolloClient from './apollo-client';
+import React, {ReactNode} from "react";
 
-const ApolloProviderWrapper = ({ children, initialApolloClient }) => {
-  const client = initialApolloClient || createApolloClient();
+interface ApolloProviderWrapperProps {
+  children: ReactNode;
+  initialApolloClient?: ApolloClient<NormalizedCacheObject>;
+}
 
+const ApolloProviderWrapper: React.FC<ApolloProviderWrapperProps> = ({ children, initialApolloClient }) => {
+  const client = initialApolloClient || createApolloClient;
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };
 
