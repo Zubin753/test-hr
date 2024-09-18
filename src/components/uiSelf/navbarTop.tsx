@@ -5,12 +5,12 @@ const NavbarTop = () => {
   return (
     <Tabs defaultValue="info">
       <TabsList className={"w-full bg-white"}>
-        <TabsTrigger className={"w-full h-full py-5"} value="home">Home</TabsTrigger>
-        <TabsTrigger className={"w-full h-full py-5"} value="info">My Info</TabsTrigger>
-        <TabsTrigger className={"w-full h-full py-5"} value="people">People</TabsTrigger>
-        <TabsTrigger className={"w-full h-full py-5"} value="hiring">Hiring</TabsTrigger>
-        <TabsTrigger className={"w-full h-full py-5"} value="reports">Reports</TabsTrigger>
-        <TabsTrigger className={"w-full h-full py-5"} value="files">Files</TabsTrigger>
+        <TabsTrigger className={"w-full  h-[54px]"} value="home">Home</TabsTrigger>
+        <TabsTrigger className={"w-full h-[54px]"} value="info">My Info</TabsTrigger>
+        <TabsTrigger className={"w-full  h-[54px]"} value="people">People</TabsTrigger>
+        <TabsTrigger className={"w-full  h-[54px]"} value="hiring">Hiring</TabsTrigger>
+        <TabsTrigger className={"w-full  h-[54px]"} value="reports">Reports</TabsTrigger>
+        <TabsTrigger className={"w-full  h-[54px]"} value="files">Files</TabsTrigger>
       </TabsList>
     </Tabs>
   );
