@@ -6,4 +6,4 @@ npm run dev
 
 login: john@mail.com
 
-password: changeme**
+password: changeme
