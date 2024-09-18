@@ -1,7 +1,5 @@
 import { AppProps } from 'next/app';
 import ApolloProviderWrapper from '../apollo-provider';
-
-
 import '../styles/global.css'
 import {ApolloClient, InMemoryCache} from "@apollo/client";
 const MyApp = ({ Component, pageProps }: AppProps) => {
@@ -9,8 +7,6 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
     uri: 'https://api.escuelajs.co/graphql',
     cache: new InMemoryCache()
   })
-
-
 
   return (
     <ApolloProviderWrapper initialApolloClient={client}>

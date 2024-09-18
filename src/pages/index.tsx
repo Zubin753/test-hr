@@ -109,14 +109,12 @@ export const LoginForm: React.FC = () => {
           <Button className="w-full "  onClick={() => submit(email, password)}>{loading ? 'Loading...' : 'Sign in'}</Button>
         </CardFooter>
       </Card>
-
         :
-
         <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle className="text-4xl align-middle mx-auto">Success</CardTitle>
             <CardDescription className="text-2xl align-middle mx-auto">
-                You have successfully logged in
+                You have successfully logged in. Please wait...
             </CardDescription>
           </CardHeader>
         </Card>
